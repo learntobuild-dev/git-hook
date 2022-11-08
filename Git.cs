@@ -16,11 +16,11 @@ static class Git
                 continue;
             }
 
-            var arguments = input.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var arguments = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
             if (arguments.Length != 3)
             {
-                throw new Exception("Invalid input length");
+                throw new Exception($"Invalid input length {arguments.Length}");
             }
 
             result.Add(new PreReceiveInputLine(arguments[2].TrimEnd(), arguments[0], arguments[1]));
