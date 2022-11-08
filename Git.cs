@@ -48,14 +48,14 @@ static class Git
 
     public static async Task<string> GetEmail(string commitHash)
     {
-        var result = await ProcessHelper.RunProcessAsync("git", $"show -s --format='%ae' {commitHash}", 5000);
+        var result = await ProcessHelper.RunProcessAsync("git", $"show -s --format=%ae {commitHash}", 5000);
 
         if (result.ExitCode != 0)
         {
             throw new Exception(result.Error);
         }
 
-        return result.Output;
+        return result.Output.Trim();
     }
 
     public static async Task<string> GetCommitMessage(string commitHash)

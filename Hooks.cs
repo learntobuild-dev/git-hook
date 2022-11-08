@@ -3,7 +3,15 @@ static class Hooks
 {
     private static readonly Dictionary<string, string> Tasks = new Dictionary<string, string>
     {
-        {"timothy@learntobuild.dev", "Implementing the Addition Operator"}
+        {"timothy@learntobuild.dev", "Implementing the Addition Operator"},
+        {"test@test.com", "Implementing the Addition Operator"}
+    };
+
+    private static readonly Dictionary<string, string[]> Permissions = new Dictionary<string, string[]>
+    {
+        {
+            "refs/heads/master", new string[] {"timothy@learntobuild.dev"}
+        }
     };
 
     public static Task ExecuteHook(string hookName, string[] args, string standardInput)
@@ -24,6 +32,8 @@ static class Hooks
                 break;
             case "pre-receive":
                 return ExecutePreReceive(standardInput);
+            case "update":
+                return ExecuteUpdate(args[0], args[1], args[2]);
         }
 
         return Task.CompletedTask;
@@ -105,6 +115,32 @@ static class Hooks
                     Environment.Exit(-1);
                 }
             }
+        }
+    }
+
+    private static async Task ExecuteUpdate(string referenceName, string from, string to)
+    {
+        if (Permissions.ContainsKey(referenceName))
+        {
+            var allowedEmails = Permissions[referenceName];
+
+            var commits = await Git.RevList(from, to);
+
+            foreach (var commit in commits)
+            {
+                var authorEmail = await Git.GetEmail(commit);
+
+                if (!allowedEmails.Any(e => e.Equals(authorEmail, StringComparison.InvariantCultureIgnoreCase)))
+                {
+                    Console.WriteLine($"User {authorEmail} is not allowed to commit to reference {referenceName}");
+                    Environment.Exit(-1);
+                }
+            }
+        }
+        else
+        {
+            Console.WriteLine($"Pushing to reference {referenceName} is denied");
+            Environment.Exit(-1);
         }
     }
 
