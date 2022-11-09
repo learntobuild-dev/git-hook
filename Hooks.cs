@@ -10,7 +10,7 @@ static class Hooks
             },
             {
                 "test@test.com",
-                "Implementing the Addition Operator"
+                "merging branches"
             }
         };
 
@@ -92,7 +92,7 @@ static class Hooks
     {
         var files =
             Directory.GetFiles(Environment.CurrentDirectory);
-            
+
         foreach (var file in files)
         {
             var fileName = Path.GetFileName(file);
