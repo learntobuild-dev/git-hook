@@ -1,20 +1,32 @@
 
 static class Hooks
 {
-    private static readonly Dictionary<string, string> Tasks = new Dictionary<string, string>
-    {
-        {"timothy@learntobuild.dev", "Implementing the Addition Operator"},
-        {"test@test.com", "Implementing the Addition Operator"}
-    };
-
-    private static readonly Dictionary<string, string[]> Permissions = new Dictionary<string, string[]>
-    {
+    private static readonly Dictionary<string, string> Tasks = 
+        new Dictionary<string, string>
         {
-            "refs/heads/master", new string[] {"timothy@learntobuild.dev"}
-        }
-    };
+            {
+                "timothy@learntobuild.dev",
+                "Implementing the Addition Operator"
+            },
+            {
+                "test@test.com",
+                "Implementing the Addition Operator"
+            }
+        };
 
-    public static Task ExecuteHook(string hookName, string[] args, string standardInput)
+    private static readonly Dictionary<string, string[]> Permissions = 
+        new Dictionary<string, string[]>
+        {
+            {
+                "refs/heads/master",
+                new string[] {"timothy@learntobuild.dev"}
+            }
+        };
+
+    public static Task ExecuteHook(
+        string hookName,
+        string[] args,
+        string standardInput)
     {
         switch (hookName)
         {
@@ -41,23 +53,33 @@ static class Hooks
 
     private static async Task ExecutePreCommit()
     {
-        var result = await ProcessHelper.RunProcessAsync("dotnet", "test -l trx -r TestResults", 10000);
+        var result = await ProcessHelper.RunProcessAsync(
+            "dotnet",
+            "test -l trx -r TestResults",
+            10000);
+
         if (result.ExitCode != 0)
         {
             Environment.Exit(result.ExitCode);
         }
     }
 
-    private static async Task ExecutePrepareCommitMsg(string commitEditMsgFilePath)
+    private static async Task ExecutePrepareCommitMsg(
+        string commitEditMsgFilePath)
     {
-        var email = Environment.GetEnvironmentVariable("GIT_AUTHOR_EMAIL");
+        var email = Environment.GetEnvironmentVariable(
+            "GIT_AUTHOR_EMAIL");
+
         if (email != null)
         {
-            await File.WriteAllTextAsync(commitEditMsgFilePath, Tasks[email]);
+            await File.WriteAllTextAsync(
+                commitEditMsgFilePath,
+                Tasks[email]);
         }
     }
 
-    private static async Task ExecuteCommitMsg(string commitEditMsgFilePath)
+    private static async Task ExecuteCommitMsg(
+        string commitEditMsgFilePath)
     {
         var commitMsg = await File.ReadAllTextAsync(commitEditMsgFilePath);
         if (!HasTaskNumber(commitMsg))
@@ -68,7 +90,10 @@ static class Hooks
 
     private static void ExecutePostCheckout()
     {
-        foreach (var file in Directory.GetFiles(Environment.CurrentDirectory))
+        var files =
+            Directory.GetFiles(Environment.CurrentDirectory);
+            
+        foreach (var file in files)
         {
             var fileName = Path.GetFileName(file);
 
@@ -80,13 +105,21 @@ static class Hooks
             }
         }
 
-        var testResultsPath = Path.Combine(Environment.CurrentDirectory, "TestResults");
+        var testResultsPath =
+            Path.Combine(
+                Environment.CurrentDirectory,
+                "TestResults");
+
         if (Directory.Exists(testResultsPath))
         {
             Directory.Delete(testResultsPath, true);
         }
 
-        var hooksTraceFilePath = Path.Combine(Environment.CurrentDirectory, "hooks-trace.log");
+        var hooksTraceFilePath =
+            Path.Combine(
+                Environment.CurrentDirectory,
+                "hooks-trace.log");
+
         if (File.Exists(hooksTraceFilePath))
         {
             File.Delete(hooksTraceFilePath);
@@ -98,7 +131,8 @@ static class Hooks
         Environment.Exit(-1);
     }
 
-    private static async Task ExecutePreReceive(string standardInput)
+    private static async Task ExecutePreReceive(
+        string standardInput)
     {
         var lines = Git.ParsePreReceiveInput(standardInput);
 
@@ -118,7 +152,10 @@ static class Hooks
         }
     }
 
-    private static async Task ExecuteUpdate(string referenceName, string from, string to)
+    private static async Task ExecuteUpdate(
+        string referenceName,
+        string from,
+        string to)
     {
         if (Permissions.ContainsKey(referenceName))
         {
@@ -144,7 +181,8 @@ static class Hooks
         }
     }
 
-    private static bool HasTaskNumber(string commitMessage)
+    private static bool HasTaskNumber(
+        string commitMessage)
     {
         var hashSignIndex = commitMessage.IndexOf('#');
         if (hashSignIndex == -1)
