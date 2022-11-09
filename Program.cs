@@ -1,4 +1,6 @@
 ﻿
+using System.Diagnostics;
+
 string ReadStandardInput()
 {
     var inputStream = Console.OpenStandardInput();
@@ -6,7 +8,7 @@ string ReadStandardInput()
     return reader.ReadToEnd();
 }
 
-var processName = System.Diagnostics.Process.GetCurrentProcess().ProcessName;
+var processName = Process.GetCurrentProcess().ProcessName;
 
 var standardInput = ReadStandardInput();
 
