@@ -29,7 +29,8 @@ static class HookOutputHelper
         string[] args,
         string standardInput)
     {
-        var sb = new System.Text.StringBuilder();
+        var sb = new StringBuilder();
+        sb.AppendLine("### Environment Variables ###");
         foreach (DictionaryEntry variable in environmentVariables)
         {
             if (variable.Key is string key && variable.Value is string value && key.StartsWith("GIT_"))
@@ -38,8 +39,11 @@ static class HookOutputHelper
             }
         }
         sb.AppendLine();
+        sb.AppendLine("### Command Line Arguments ###");
         sb.AppendJoin(", ", args);
         sb.AppendLine();
+        sb.AppendLine();
+        sb.AppendLine("### Standard Input ###");
         sb.AppendLine(standardInput);
         return sb.ToString();
     }
