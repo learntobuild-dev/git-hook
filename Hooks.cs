@@ -46,6 +46,8 @@ static class Hooks
                 return ExecutePreReceive(standardInput);
             case "update":
                 return ExecuteUpdate(args[0], args[1], args[2]);
+            case "post-receive":
+                return ExecutePostReceive();
         }
 
         return Task.CompletedTask;
@@ -138,14 +140,19 @@ static class Hooks
 
         foreach (var line in lines)
         {
-            var commits = await Git.RevList(line.From, line.To);
+            var commits =
+                await Git.RevList(line.From, line.To);
 
             foreach (var commit in commits)
             {
-                var commitMessage = await Git.GetCommitMessage(commit);
+                var commitMessage =
+                    await Git.GetCommitMessage(commit);
+
                 if (!HasTaskNumber(commitMessage))
                 {
-                    Console.WriteLine($"Commit {commit} does not have a task number associated with it");
+                    Console.WriteLine(
+                        @$"Commit {commit} does not have a task number " +
+                        @"associated with it");
                     Environment.Exit(-1);
                 }
             }
@@ -167,17 +174,46 @@ static class Hooks
             {
                 var authorEmail = await Git.GetEmail(commit);
 
-                if (!allowedEmails.Any(e => e.Equals(authorEmail, StringComparison.InvariantCultureIgnoreCase)))
+                if (!allowedEmails.Any(
+                        e => e.Equals(
+                            authorEmail,
+                            StringComparison.InvariantCultureIgnoreCase)))
                 {
-                    Console.WriteLine($"User {authorEmail} is not allowed to commit to reference {referenceName}");
+                    Console.WriteLine(
+                        @$"User {authorEmail} is not allowed to " +
+                        @$"commit to reference {referenceName}");
                     Environment.Exit(-1);
                 }
             }
         }
         else
         {
-            Console.WriteLine($"Pushing to reference {referenceName} is denied");
+            Console.WriteLine(
+                $"Pushing to reference {referenceName} is denied");
             Environment.Exit(-1);
+        }
+    }
+
+    private static async Task ExecutePostReceive()
+    {
+        var workingDirectory = "/home/timothy/Desktop/workspace";
+
+        await
+            Git.Clone(
+                "http://localhost:3000/timothy/calculator.git",
+                workingDirectory);
+
+        var buildResult =
+            await
+                ProcessHelper.RunProcessAsync(
+                    "dotnet",
+                    $"build",
+                    10000,
+                    "/home/timothy/Desktop/workspace/calculator");
+
+        if (buildResult.ExitCode != 0)
+        {
+            throw new Exception(buildResult.Error);
         }
     }
 

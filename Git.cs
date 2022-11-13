@@ -3,6 +3,38 @@ using System.Text;
 
 static class Git
 {
+    public static async Task Clone(string remoteUrl, string workingDirectory)
+    {
+        var result =
+            await
+                ProcessHelper.RunProcessAsync(
+                    "git",
+                    $"clone {remoteUrl}",                    
+                    10000,
+                    workingDirectory);
+
+        if (result.ExitCode != 0)
+        {
+            throw new Exception(result.Error);
+        }
+    }
+
+    public static async Task Pull(string workingDirectory)
+    {
+        var result =
+            await
+                ProcessHelper.RunProcessAsync(
+                    "git",
+                    $"pull",
+                    10000,
+                    workingDirectory);
+
+        if (result.ExitCode != 0)
+        {
+            throw new Exception(result.Error);
+        }
+    }
+
     public static PreReceiveInputLine[] ParsePreReceiveInput(string input)
     {
         var result = new List<PreReceiveInputLine>();
@@ -87,10 +119,24 @@ class PreReceiveInputLine
 
 static class ProcessHelper
 {
-    public static async Task<ProcessResult> RunProcessAsync(
+    public static Task<ProcessResult> RunProcessAsync(
         string command,
         string arguments,
         int timeout)
+    {
+        return
+            RunProcessAsync(
+                command,
+                arguments,
+                timeout,
+                Environment.CurrentDirectory);
+    }
+
+    public static async Task<ProcessResult> RunProcessAsync(
+        string command,
+        string arguments,
+        int timeout,
+        string workingDirectory)
     {
         var result = new ProcessResult();
 
@@ -98,7 +144,7 @@ static class ProcessHelper
 
         process.StartInfo.FileName = command;
         process.StartInfo.Arguments = arguments;
-        process.StartInfo.WorkingDirectory = Environment.CurrentDirectory;
+        process.StartInfo.WorkingDirectory = workingDirectory;
         process.StartInfo.UseShellExecute = false;
         process.StartInfo.RedirectStandardOutput = true;
         process.StartInfo.RedirectStandardError = true;
