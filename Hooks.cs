@@ -205,29 +205,27 @@ static class Hooks
 
         var repoPath = Path.Combine(buildPath, "calculator");
 
-        try
-        {
-            await
-                Git.Clone(
-                    "http://localhost:7000/githooks/calculator.git",
-                    buildPath);
-
-            var buildResult =
-                await
-                    ProcessHelper.RunProcessAsync(
-                        "dotnet",
-                        $"build",
-                        10000,
-                        repoPath);
-
-            if (buildResult.ExitCode != 0)
-            {
-                throw new Exception(buildResult.Error);
-            }            
-        }
-        finally
+        if (Directory.Exists(repoPath))
         {
             Directory.Delete(repoPath, true);
+        }
+
+        await
+            Git.Clone(
+                "http://localhost:7000/githooks/calculator.git",
+                buildPath);
+
+        var buildResult =
+            await
+                ProcessHelper.RunProcessAsync(
+                    "dotnet",
+                    $"build",
+                    10000,
+                    repoPath);
+
+        if (buildResult.ExitCode != 0)
+        {
+            throw new Exception(buildResult.Error);
         }
     }
 
