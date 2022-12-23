@@ -196,24 +196,38 @@ static class Hooks
 
     private static async Task ExecutePostReceive()
     {
-        var workingDirectory = "/home/timothy/Desktop/workspace";
+        var buildPath = "/tmp/build";
 
-        await
-            Git.Clone(
-                "http://localhost:3000/timothy/calculator.git",
-                workingDirectory);
-
-        var buildResult =
-            await
-                ProcessHelper.RunProcessAsync(
-                    "dotnet",
-                    $"build",
-                    10000,
-                    "/home/timothy/Desktop/workspace/calculator");
-
-        if (buildResult.ExitCode != 0)
+        if (!Directory.Exists(buildPath))
         {
-            throw new Exception(buildResult.Error);
+            Directory.CreateDirectory(buildPath);
+        }
+
+        var repoPath = Path.Combine(buildPath, "calculator");
+
+        try
+        {
+            await
+                Git.Clone(
+                    "http://localhost:7000/githooks/calculator.git",
+                    buildPath);
+
+            var buildResult =
+                await
+                    ProcessHelper.RunProcessAsync(
+                        "dotnet",
+                        $"build",
+                        10000,
+                        repoPath);
+
+            if (buildResult.ExitCode != 0)
+            {
+                throw new Exception(buildResult.Error);
+            }            
+        }
+        finally
+        {
+            Directory.Delete(repoPath, true);
         }
     }
 
