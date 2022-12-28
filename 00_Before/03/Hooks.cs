@@ -14,15 +14,6 @@ static class Hooks
             }
         };
 
-    private static readonly Dictionary<string, string[]> Permissions = 
-        new Dictionary<string, string[]>
-        {
-            {
-                "refs/heads/master",
-                new string[] {"timothy@learntobuild.dev"}
-            }
-        };
-
     public static Task ExecuteHook(
         string hookName,
         string[] args,
@@ -42,12 +33,6 @@ static class Hooks
             case "pre-rebase":
                 ExecutePreRebase();
                 break;
-            case "pre-receive":
-                return ExecutePreReceive(standardInput);
-            case "update":
-                return ExecuteUpdate(args[0], args[1], args[2]);
-            case "post-receive":
-                return ExecutePostReceive();
         }
 
         return Task.CompletedTask;
@@ -131,102 +116,6 @@ static class Hooks
     private static void ExecutePreRebase()
     {
         Environment.Exit(-1);
-    }
-
-    private static async Task ExecutePreReceive(
-        string standardInput)
-    {
-        var lines = Git.ParsePreReceiveInput(standardInput);
-
-        foreach (var line in lines)
-        {
-            var commits =
-                await Git.RevList(line.From, line.To);
-
-            foreach (var commit in commits)
-            {
-                var commitMessage =
-                    await Git.GetCommitMessage(commit);
-
-                if (!HasTaskNumber(commitMessage))
-                {
-                    Console.WriteLine(
-                        @$"Commit {commit} does not have a task number " +
-                        @"associated with it");
-                    Environment.Exit(-1);
-                }
-            }
-        }
-    }
-
-    private static async Task ExecuteUpdate(
-        string referenceName,
-        string from,
-        string to)
-    {
-        if (Permissions.ContainsKey(referenceName))
-        {
-            var allowedEmails = Permissions[referenceName];
-
-            var commits = await Git.RevList(from, to);
-
-            foreach (var commit in commits)
-            {
-                var authorEmail = await Git.GetEmail(commit);
-
-                if (!allowedEmails.Any(
-                        e => e.Equals(
-                            authorEmail,
-                            StringComparison.InvariantCultureIgnoreCase)))
-                {
-                    Console.WriteLine(
-                        @$"User {authorEmail} is not allowed to " +
-                        @$"commit to reference {referenceName}");
-                    Environment.Exit(-1);
-                }
-            }
-        }
-        else
-        {
-            Console.WriteLine(
-                $"Pushing to reference {referenceName} is denied");
-            Environment.Exit(-1);
-        }
-    }
-
-    private static async Task ExecutePostReceive()
-    {
-        var buildPath = "/tmp/build";
-
-        if (!Directory.Exists(buildPath))
-        {
-            Directory.CreateDirectory(buildPath);
-        }
-
-        var repoPath = Path.Combine(buildPath, "calculator");
-
-        if (Directory.Exists(repoPath))
-        {
-            Directory.Delete(repoPath, true);
-        }
-
-        await
-            Git.Clone(
-                "http://localhost:7000/githooks/calculator.git",
-                buildPath);
-
-        var buildResult =
-            await
-                ProcessHelper.RunProcessAsync(
-                    "dotnet",
-                    $"build",
-                    10000,
-                    repoPath);
-
-        if (buildResult.ExitCode != 0)
-        {
-            throw new Exception(buildResult.Error);
-        }
     }
 
     private static bool HasTaskNumber(
