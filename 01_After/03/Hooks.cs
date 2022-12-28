@@ -220,7 +220,7 @@ static class Hooks
                 ProcessHelper.RunProcessAsync(
                     "dotnet",
                     $"build",
-                    10000,
+                    30000,
                     repoPath);
 
         if (buildResult.ExitCode != 0)
