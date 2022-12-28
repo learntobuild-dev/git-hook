@@ -43,7 +43,7 @@ static class Hooks
         var result = await ProcessHelper.RunProcessAsync(
             "dotnet",
             "test -l trx -r TestResults",
-            10000);
+            30000);
 
         if (result.ExitCode != 0)
         {
